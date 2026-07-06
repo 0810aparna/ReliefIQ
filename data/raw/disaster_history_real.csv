@@ -1,0 +1,14 @@
+district,fatalities,no_of_camps,actual_rainfall_in_mm,normal_rainfall_in_mm,no_of_landslides,full_damaged_houses,district_id,district_name,population,severity
+Thiruvananthapuram,11,94,373.8,142.0,0,111,1,Thiruvananthapuram,3307284,Medium
+Kollam,5,168,644.1,258.7,2,95,2,Kollam,2629703,Low
+Pathanamthitta,3,4352,764.9,352.7,8,741,3,Pathanamthitta,1195537,High
+Alappuzha,43,2126,608.2,343.1,0,2075,4,Alappuzha,2121943,Critical
+Kottayam,14,788,619.2,386.0,29,76,5,Kottayam,1979384,Low
+Idukki,54,363,1478.9,527.3,143,1166,6,Idukki,1107453,High
+Ernakulam,58,1582,648.3,401.3,0,615,7,Ernakulam,3279860,High
+Thrissur,72,1513,734.7,440.1,26,2889,8,Thrissur,3110327,Critical
+Palakkad,20,165,848.8,333.8,20,1118,9,Palakkad,2810892,High
+Malappuram,30,213,913.7,395.3,30,500,10,Malappuram,4110956,High
+Kozhikode,16,399,836.0,500.9,9,107,11,Kozhikode,3089543,Medium
+Wayanad,6,451,1053.5,592.9,47,702,12,Wayanad,817420,High
+Kannur,6,37,665.3,540.9,17,121,13,Kannur,2525637,Medium

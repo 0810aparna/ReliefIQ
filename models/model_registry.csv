@@ -1,0 +1,2 @@
+model_name,timestamp,features,metric_name,metric_value,dataset_version
+xgb_v0,2026-07-06T15:14:33.967414,actual_rainfall_in_mm;normal_rainfall_in_mm;no_of_landslides;population,train_accuracy,1.0,v1_real_kerala_2018_district_level
