@@ -1,9 +1,12 @@
 import pandas as pd
 import numpy as np
+from collections import Counter
 from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import LeaveOneOut, GridSearchCV
 from sklearn.metrics import accuracy_score, f1_score
 import shap
+import matplotlib.pyplot as plt
 import joblib
 import csv
 from pathlib import Path
@@ -33,13 +36,10 @@ reverse_map = {v: k for k, v in label_map.items()}
 X = disasters[features]
 y = disasters["severity"].map(label_map)
 
-# --- Leave-One-Out Cross-Validation: appropriate for n=13 ---
-# Each fold trains on 12 districts, tests on the 1 held out — repeated 13 times.
-# This is the standard approach for very small datasets where a single train/
-# test split would leave too little data on either side to be meaningful.
-loo = LeaveOneOut()
-fold_predictions, fold_actuals = [], []
+loo = LeaveOneOut()  # <-- defined ONCE here, reused everywhere below
 
+# --- 4-class LOOCV ---
+fold_predictions, fold_actuals = [], []
 for train_idx, test_idx in loo.split(X):
     X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
     y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
@@ -54,30 +54,84 @@ loocv_f1 = f1_score(fold_actuals, fold_predictions, average="weighted")
 print(f"LOOCV accuracy (honest, out-of-fold): {loocv_accuracy:.2f}")
 print(f"LOOCV weighted F1: {loocv_f1:.2f}")
 
-# --- Small hyperparameter search (grid kept small given tiny dataset) ---
-param_grid = {"max_depth": [2, 3, 4], "n_estimators": [30, 50, 80], "learning_rate": [0.05, 0.1, 0.2]}
-grid = GridSearchCV(XGBClassifier(), param_grid, cv=LeaveOneOut(), scoring="accuracy")
-grid.fit(X, y)
-print(f"Best params: {grid.best_params_}")
+# --- Baseline check ---
+majority_class = Counter(y).most_common(1)[0]
+baseline_accuracy = majority_class[1] / len(y)
+print(f"\nMajority-class baseline accuracy (4-class): {baseline_accuracy:.2f}")
+print(f"Your model's LOOCV accuracy:                  {loocv_accuracy:.2f}")
 
-# --- Final model, trained on ALL data (standard practice once evaluation is done) ---
-final_model = XGBClassifier(**grid.best_params_)
+# --- Binary collapse ---
+disasters["severity_binary"] = disasters["severity"].map(
+    {"Low": 0, "Medium": 0, "High": 1, "Critical": 1}
+)
+y_binary = disasters["severity_binary"]
+baseline_binary = Counter(y_binary).most_common(1)[0][1] / len(y_binary)
+print(f"\nBinary majority-class baseline: {baseline_binary:.2f}")
+
+fold_predictions_bin, fold_actuals_bin = [], []
+for train_idx, test_idx in loo.split(X):
+    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
+    y_train, y_test = y_binary.iloc[train_idx], y_binary.iloc[test_idx]
+    fold_model = XGBClassifier(n_estimators=30, max_depth=2)
+    fold_model.fit(X_train, y_train)
+    pred = fold_model.predict(X_test)
+    fold_predictions_bin.append(pred[0])
+    fold_actuals_bin.append(y_test.values[0])
+
+binary_loocv_accuracy = accuracy_score(fold_actuals_bin, fold_predictions_bin)
+print(f"Binary LOOCV accuracy (full features): {binary_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+
+# --- Trimmed features ---
+trimmed_features = ["actual_rainfall_in_mm", "rainfall_pct_of_normal", "population"]
+X_trimmed = disasters[trimmed_features]
+
+fold_predictions_trim, fold_actuals_trim = [], []
+for train_idx, test_idx in loo.split(X_trimmed):
+    X_train, X_test = X_trimmed.iloc[train_idx], X_trimmed.iloc[test_idx]
+    y_train, y_test = y_binary.iloc[train_idx], y_binary.iloc[test_idx]
+    fold_model = XGBClassifier(n_estimators=30, max_depth=2)
+    fold_model.fit(X_train, y_train)
+    pred = fold_model.predict(X_test)
+    fold_predictions_trim.append(pred[0])
+    fold_actuals_trim.append(y_test.values[0])
+
+trimmed_loocv_accuracy = accuracy_score(fold_actuals_trim, fold_predictions_trim)
+print(f"Trimmed-features binary LOOCV accuracy: {trimmed_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+
+# --- Logistic Regression, trimmed features ---
+fold_predictions_lr, fold_actuals_lr = [], []
+for train_idx, test_idx in loo.split(X_trimmed):
+    X_train, X_test = X_trimmed.iloc[train_idx], X_trimmed.iloc[test_idx]
+    y_train, y_test = y_binary.iloc[train_idx], y_binary.iloc[test_idx]
+    lr_model = LogisticRegression(max_iter=1000)
+    lr_model.fit(X_train, y_train)
+    pred = lr_model.predict(X_test)
+    fold_predictions_lr.append(pred[0])
+    fold_actuals_lr.append(y_test.values[0])
+
+lr_accuracy = accuracy_score(fold_actuals_lr, fold_predictions_lr)
+print(f"Logistic Regression (trimmed) LOOCV accuracy: {lr_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+
+# --- Summary ---
+print("\n--- Summary ---")
+print(f"4-class XGBoost accuracy:            {loocv_accuracy:.2f}  (baseline {baseline_accuracy:.2f})")
+print(f"Binary XGBoost, full features:       {binary_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})")
+print(f"Binary XGBoost, trimmed features:    {trimmed_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})")
+print(f"Binary Logistic Regression, trimmed: {lr_accuracy:.2f}  (baseline {baseline_binary:.2f})")
+
+# --- Save whichever full-feature 4-class model, for now (registry keeps full history either way) ---
+final_model = XGBClassifier(n_estimators=50, max_depth=3)
 final_model.fit(X, y)
-
 Path("models/saved").mkdir(parents=True, exist_ok=True)
 joblib.dump(final_model, "models/saved/xgb_v1.pkl")
 
-# --- SHAP explainability ---
 explainer = shap.TreeExplainer(final_model)
 shap_values = explainer.shap_values(X)
 Path("docs/eda_plots").mkdir(parents=True, exist_ok=True)
 shap.summary_plot(shap_values, X, show=False)
-import matplotlib.pyplot as plt
 plt.savefig("docs/eda_plots/shap_summary.png", bbox_inches="tight")
 plt.close()
-print("SHAP summary plot saved.")
 
-# --- Log to model registry ---
 registry_path = Path("models/model_registry.csv")
 new_row = {
     "model_name": "xgb_v1", "timestamp": datetime.now().isoformat(),
@@ -91,4 +145,4 @@ with open(registry_path, "a", newline="") as f:
         writer.writeheader()
     writer.writerow(new_row)
 
-print("\nDone. Model v1 saved, registered, and explained.")
+print("\nDone.")
