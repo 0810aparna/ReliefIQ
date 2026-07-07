@@ -2,3 +2,10 @@ xgboost == 2.0.3
 pulp == 2.8.0
 joblib == 1.4.2
 pulp == 2.8.0
+
+black==26.5.1
+numpy==2.5.1
+pandas==3.0.3
+PuLP==3.3.2
+pytest==9.1.1
+ruff==0.15.20

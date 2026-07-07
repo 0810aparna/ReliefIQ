@@ -24,3 +24,11 @@ out-of-fold predictions instead of one lucky/unlucky split.
 ## Features Used
 actual_rainfall_in_mm, normal_rainfall_in_mm, no_of_landslides, population,
 rainfall_deviation_from_normal, rainfall_pct_of_normal, hospitals_per_100k
+
+## Final v1 Decision (see ADR-008)
+After LOOCV testing showed no ML approach (XGBoost 4-class: 0.38 vs 0.46
+baseline; XGBoost binary: 0.31 vs 0.62 baseline; Logistic Regression: 0.54
+vs 0.62 baseline) reliably beating a majority-class baseline at n=13, the
+system's actual v1 severity predictor is the composite rule-based score
+in services/rule_based_predictor.py, not xgb_v1.pkl. The ML artifacts
+above are retained as documented evidence of the evaluation process.

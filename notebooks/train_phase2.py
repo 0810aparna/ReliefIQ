@@ -1,9 +1,8 @@
 import pandas as pd
-import numpy as np
 from collections import Counter
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import LeaveOneOut, GridSearchCV
+from sklearn.model_selection import LeaveOneOut
 from sklearn.metrics import accuracy_score, f1_score
 import shap
 import matplotlib.pyplot as plt
