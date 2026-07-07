@@ -34,3 +34,22 @@ if such minimums become defined.
 - shelter_capacity and transport_limit are illustrative conversions from
   infrastructure counts (shelters x 1000, roads x 50), not measured
   logistics data — disclosed as an assumption, not fact.
+
+## Equity Cap (added after observing all-or-nothing allocation in testing)
+A linear priority-weighted objective, without an explicit fairness bound,
+mathematically prefers concentrating all resources in the single highest-
+priority district (equivalent to the fractional knapsack problem). This is
+mathematically correct given the stated objective, but operationally
+undesirable — real relief distribution should never leave every other
+flagged district with zero. Added a hard cap: no district may receive more
+than 40% of the total available stock in one allocation round, forcing
+the solver to spread across at least 3 districts even under scarcity.
+
+## Note on Scale
+total_food_available=5000 in current test runs is an illustrative demo
+value, not a calibrated real inventory figure — real Kerala relief
+operations would involve stockpiles several orders of magnitude larger.
+At this demo scale, only the top 2-3 priority districts receive any
+allocation; this is a realistic consequence of genuine scarcity, not a
+solver defect. A more realistic total (e.g., in the hundreds of
+thousands) would be used for actual deployment scenarios.

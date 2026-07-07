@@ -1,8 +1,12 @@
 """
 Priority-weighted resource allocation with real constraints: total
-inventory, shelter capacity, and transport capacity per district.
+inventory, shelter capacity, transport capacity, and an equity cap
+per district.
 """
 import pulp
+
+MAX_SHARE_PER_DISTRICT = 0.4  # equity policy: no single district gets more
+                               # than 40% of total available stock in one round
 
 
 def optimize_allocation_v2(demands: dict, priorities: dict, shelter_caps: dict,
@@ -12,14 +16,16 @@ def optimize_allocation_v2(demands: dict, priorities: dict, shelter_caps: dict,
 
     alloc_vars = {}
     for d in districts:
-        upper_bound = min(demands[d], shelter_caps.get(d, demands[d]), transport_limits.get(d, demands[d]))
+        equity_cap = MAX_SHARE_PER_DISTRICT * total_food_available
+        upper_bound = min(
+            demands[d],
+            shelter_caps.get(d, demands[d]),
+            transport_limits.get(d, demands[d]),
+            equity_cap,
+        )
         alloc_vars[d] = pulp.LpVariable(f"alloc_{d}", lowBound=0, upBound=upper_bound)
 
-    # Objective: maximize priority-weighted allocation (fixes the Phase 1
-    # issue where the optimizer arbitrarily gave everything to one district)
     prob += pulp.lpSum(priorities[d] * alloc_vars[d] for d in districts)
-
-    # Constraint: can't exceed total available inventory
     prob += pulp.lpSum(alloc_vars.values()) <= total_food_available
 
     status = prob.solve(pulp.PULP_CBC_CMD(msg=0))
