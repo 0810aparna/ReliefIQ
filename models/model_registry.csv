@@ -4,3 +4,16 @@ xgb_v1,2026-07-06T15:26:49.853371,actual_rainfall_in_mm;normal_rainfall_in_mm;no
 xgb_v1,2026-07-06T15:33:48.168343,actual_rainfall_in_mm;normal_rainfall_in_mm;no_of_landslides;population;rainfall_deviation_from_normal;rainfall_pct_of_normal;hospitals_per_100k,loocv_accuracy,0.3846,v2_real_kerala_engineered
 xgb_v1,2026-07-06T15:53:26.676594,actual_rainfall_in_mm;normal_rainfall_in_mm;no_of_landslides;population;rainfall_deviation_from_normal;rainfall_pct_of_normal;hospitals_per_100k,loocv_accuracy,0.3846,v2_real_kerala_engineered
 xgb_v1,2026-07-06T21:22:36.777949,actual_rainfall_in_mm;normal_rainfall_in_mm;no_of_landslides;population;rainfall_deviation_from_normal;rainfall_pct_of_normal;hospitals_per_100k,loocv_accuracy,0.3846,v2_real_kerala_engineered
+python -c "
+import csv
+from pathlib import Path
+from datetime import datetime
+p = Path('models/model_registry.csv')
+row = {'model_name': 'rule_based_v1', 'timestamp': datetime.now().isoformat(),
+       'features': 'rainfall_pct_of_normal', 'metric_name': 'note',
+       'metric_value': 'baseline_0.62_all_ml_below', 'dataset_version': 'v2_real_kerala_engineered'}
+with open(p, 'a', newline='') as f:
+    w = csv.DictWriter(f, fieldnames=row.keys())
+    w.writerow(row)
+print('Logged rule_based_v1 decision to registry.')
+"
