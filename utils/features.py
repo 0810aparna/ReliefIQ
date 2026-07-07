@@ -2,10 +2,13 @@
 Reusable feature engineering functions — imported by both training code
 and (later) serving code, so they never diverge.
 """
+
 import pandas as pd
 
 
-def add_historical_rainfall_context(disasters: pd.DataFrame, rainfall_path: str) -> pd.DataFrame:
+def add_historical_rainfall_context(
+    disasters: pd.DataFrame, rainfall_path: str
+) -> pd.DataFrame:
     """
     Adds Kerala's long-term average monsoon (Jun-Sep) rainfall as a feature,
     and how much the 2018 actual rainfall deviated from that historical norm.
@@ -31,5 +34,7 @@ def add_infrastructure_ratio(disasters: pd.DataFrame, infra_path: str) -> pd.Dat
     """Adds hospitals-per-capita as a feature, joining on district_id."""
     infra = pd.read_csv(infra_path)
     disasters = disasters.merge(infra, on="district_id", how="left")
-    disasters["hospitals_per_100k"] = disasters["hospitals"] / (disasters["population"] / 100_000)
+    disasters["hospitals_per_100k"] = disasters["hospitals"] / (
+        disasters["population"] / 100_000
+    )
     return disasters

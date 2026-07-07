@@ -11,7 +11,9 @@ print("\nSeverity distribution:\n", disasters["severity"].value_counts())
 
 # Rainfall vs damage
 plt.figure(figsize=(8, 5))
-sns.scatterplot(data=disasters, x="actual_rainfall_in_mm", y="full_damaged_houses", hue="severity")
+sns.scatterplot(
+    data=disasters, x="actual_rainfall_in_mm", y="full_damaged_houses", hue="severity"
+)
 plt.title("Rainfall vs. Houses Damaged (Kerala 2018)")
 plt.savefig("docs/eda_plots/rainfall_vs_damage.png")
 plt.close()

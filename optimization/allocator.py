@@ -3,14 +3,20 @@ Priority-weighted resource allocation with real constraints: total
 inventory, shelter capacity, transport capacity, and an equity cap
 per district.
 """
+
 import pulp
 
 MAX_SHARE_PER_DISTRICT = 0.4  # equity policy: no single district gets more
-                               # than 40% of total available stock in one round
+# than 40% of total available stock in one round
 
 
-def optimize_allocation_v2(demands: dict, priorities: dict, shelter_caps: dict,
-                            transport_limits: dict, total_food_available: int) -> dict:
+def optimize_allocation_v2(
+    demands: dict,
+    priorities: dict,
+    shelter_caps: dict,
+    transport_limits: dict,
+    total_food_available: int,
+) -> dict:
     prob = pulp.LpProblem("PriorityWeightedAllocation", pulp.LpMaximize)
     districts = list(demands.keys())
 

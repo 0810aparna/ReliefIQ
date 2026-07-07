@@ -11,23 +11,39 @@ real signals is more defensible than an arbitrary single cutoff.
 """
 
 
-def compute_risk_score(rainfall_pct_of_normal: float, no_of_landslides: int,
-                        rainfall_deviation_from_normal: float) -> float:
+def compute_risk_score(
+    rainfall_pct_of_normal: float,
+    no_of_landslides: int,
+    rainfall_deviation_from_normal: float,
+) -> float:
     """
     Weighted 0-1 composite. Weights are a documented judgment call, not
     fitted — disclosed explicitly rather than presented as learned.
     """
-    rainfall_component = min(rainfall_pct_of_normal / 3.0, 1.0)          # normalize, cap at 3x normal
-    landslide_component = min(no_of_landslides / 10.0, 1.0)               # normalize, cap at 10 landslides
+    rainfall_component = min(
+        rainfall_pct_of_normal / 3.0, 1.0
+    )  # normalize, cap at 3x normal
+    landslide_component = min(
+        no_of_landslides / 10.0, 1.0
+    )  # normalize, cap at 10 landslides
     deviation_component = min(max(rainfall_deviation_from_normal, 0) / 3000, 1.0)
 
-    score = (0.4 * rainfall_component) + (0.4 * landslide_component) + (0.2 * deviation_component)
+    score = (
+        (0.4 * rainfall_component)
+        + (0.4 * landslide_component)
+        + (0.2 * deviation_component)
+    )
     return round(score, 3)
 
 
-def predict_severity_rule(rainfall_pct_of_normal: float, no_of_landslides: int,
-                           rainfall_deviation_from_normal: float) -> dict:
-    score = compute_risk_score(rainfall_pct_of_normal, no_of_landslides, rainfall_deviation_from_normal)
+def predict_severity_rule(
+    rainfall_pct_of_normal: float,
+    no_of_landslides: int,
+    rainfall_deviation_from_normal: float,
+) -> dict:
+    score = compute_risk_score(
+        rainfall_pct_of_normal, no_of_landslides, rainfall_deviation_from_normal
+    )
     if score >= 0.7:
         severity = "Critical"
     elif score >= 0.5:

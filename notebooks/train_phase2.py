@@ -13,12 +13,18 @@ from pathlib import Path
 from datetime import datetime
 
 import sys
+
 sys.path.append(".")
 from utils.features import add_historical_rainfall_context, add_infrastructure_ratio
 
 # --- Load and engineer features ---
 disasters = pd.read_csv("data/raw/disaster_history_real.csv")
-for col in ["actual_rainfall_in_mm", "normal_rainfall_in_mm", "no_of_landslides", "population"]:
+for col in [
+    "actual_rainfall_in_mm",
+    "normal_rainfall_in_mm",
+    "no_of_landslides",
+    "population",
+]:
     disasters[col] = pd.to_numeric(disasters[col], errors="coerce")
 disasters = disasters.dropna()
 
@@ -26,8 +32,12 @@ disasters = add_historical_rainfall_context(disasters, "data/raw/rainfall_india.
 disasters = add_infrastructure_ratio(disasters, "data/raw/infrastructure.csv")
 
 features = [
-    "actual_rainfall_in_mm", "normal_rainfall_in_mm", "no_of_landslides",
-    "population", "rainfall_deviation_from_normal", "rainfall_pct_of_normal",
+    "actual_rainfall_in_mm",
+    "normal_rainfall_in_mm",
+    "no_of_landslides",
+    "population",
+    "rainfall_deviation_from_normal",
+    "rainfall_pct_of_normal",
     "hospitals_per_100k",
 ]
 label_map = {"Low": 0, "Medium": 1, "High": 2, "Critical": 3}
@@ -79,7 +89,9 @@ for train_idx, test_idx in loo.split(X):
     fold_actuals_bin.append(y_test.values[0])
 
 binary_loocv_accuracy = accuracy_score(fold_actuals_bin, fold_predictions_bin)
-print(f"Binary LOOCV accuracy (full features): {binary_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+print(
+    f"Binary LOOCV accuracy (full features): {binary_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})"
+)
 
 # --- Trimmed features ---
 trimmed_features = ["actual_rainfall_in_mm", "rainfall_pct_of_normal", "population"]
@@ -96,7 +108,9 @@ for train_idx, test_idx in loo.split(X_trimmed):
     fold_actuals_trim.append(y_test.values[0])
 
 trimmed_loocv_accuracy = accuracy_score(fold_actuals_trim, fold_predictions_trim)
-print(f"Trimmed-features binary LOOCV accuracy: {trimmed_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+print(
+    f"Trimmed-features binary LOOCV accuracy: {trimmed_loocv_accuracy:.2f} (baseline: {baseline_binary:.2f})"
+)
 
 # --- Logistic Regression, trimmed features ---
 fold_predictions_lr, fold_actuals_lr = [], []
@@ -110,14 +124,24 @@ for train_idx, test_idx in loo.split(X_trimmed):
     fold_actuals_lr.append(y_test.values[0])
 
 lr_accuracy = accuracy_score(fold_actuals_lr, fold_predictions_lr)
-print(f"Logistic Regression (trimmed) LOOCV accuracy: {lr_accuracy:.2f} (baseline: {baseline_binary:.2f})")
+print(
+    f"Logistic Regression (trimmed) LOOCV accuracy: {lr_accuracy:.2f} (baseline: {baseline_binary:.2f})"
+)
 
 # --- Summary ---
 print("\n--- Summary ---")
-print(f"4-class XGBoost accuracy:            {loocv_accuracy:.2f}  (baseline {baseline_accuracy:.2f})")
-print(f"Binary XGBoost, full features:       {binary_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})")
-print(f"Binary XGBoost, trimmed features:    {trimmed_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})")
-print(f"Binary Logistic Regression, trimmed: {lr_accuracy:.2f}  (baseline {baseline_binary:.2f})")
+print(
+    f"4-class XGBoost accuracy:            {loocv_accuracy:.2f}  (baseline {baseline_accuracy:.2f})"
+)
+print(
+    f"Binary XGBoost, full features:       {binary_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})"
+)
+print(
+    f"Binary XGBoost, trimmed features:    {trimmed_loocv_accuracy:.2f}  (baseline {baseline_binary:.2f})"
+)
+print(
+    f"Binary Logistic Regression, trimmed: {lr_accuracy:.2f}  (baseline {baseline_binary:.2f})"
+)
 
 # --- Save whichever full-feature 4-class model, for now (registry keeps full history either way) ---
 final_model = XGBClassifier(n_estimators=50, max_depth=3)
@@ -134,9 +158,12 @@ plt.close()
 
 registry_path = Path("models/model_registry.csv")
 new_row = {
-    "model_name": "xgb_v1", "timestamp": datetime.now().isoformat(),
-    "features": ";".join(features), "metric_name": "loocv_accuracy",
-    "metric_value": round(loocv_accuracy, 4), "dataset_version": "v2_real_kerala_engineered",
+    "model_name": "xgb_v1",
+    "timestamp": datetime.now().isoformat(),
+    "features": ";".join(features),
+    "metric_name": "loocv_accuracy",
+    "metric_value": round(loocv_accuracy, 4),
+    "dataset_version": "v2_real_kerala_engineered",
 }
 write_header = not registry_path.exists()
 with open(registry_path, "a", newline="") as f:
