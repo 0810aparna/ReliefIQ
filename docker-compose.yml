@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: reliefiq_postgres
+    environment:
+      POSTGRES_USER: reliefiq_user
+      POSTGRES_PASSWORD: reliefiq_pass
+      POSTGRES_DB: reliefiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - reliefiq_pg_data:/var/lib/postgresql/data
+
+  api:
+    build: .
+    container_name: reliefiq_api
+    environment:
+      DATABASE_URL: postgresql://reliefiq_user:reliefiq_pass@postgres:5432/reliefiq
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+volumes:
+  reliefiq_pg_data:
