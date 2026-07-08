@@ -26,3 +26,4 @@ class PredictResponse(BaseModel):
     confidence: float
     decision_action: str
     alert_level: str
+    components: dict

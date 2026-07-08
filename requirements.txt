@@ -19,3 +19,6 @@ fastapi
 uvicorn[standard]
 pydantic
 httpx
+streamlit
+requests
+plotly
