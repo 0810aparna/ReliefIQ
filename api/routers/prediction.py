@@ -51,5 +51,5 @@ def predict(request: PredictRequest, db: Session = Depends(get_db)):
         district_id=district.district_id, district_name=district.district_name,
         severity=prediction["severity"], risk_score=prediction["risk_score"],
         confidence=prediction["confidence"], decision_action=decision["action"],
-        alert_level=decision["alert_level"],
+        alert_level=decision["alert_level"], components=prediction["components"],
     )

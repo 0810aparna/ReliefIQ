@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.pytest_cache/
+data/raw/*.csv
+data/processed/
+models/saved/*.pkl
+.env
+docs/eda_plots/
+notebooks/
