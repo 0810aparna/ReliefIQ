@@ -5,6 +5,11 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# this is the Alembic Config object, which provides
+# access to the values within the .ini file in use.
+config = context.config
+
+
 import sys
 sys.path.append(".")
 from database.base import Base
@@ -12,9 +17,19 @@ from database.models import District, Infrastructure, DisasterHistory, Predictio
 
 target_metadata = Base.metadata
 
-# this is the Alembic Config object, which provides
-# access to the values within the .ini file in use.
-config = context.config
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# Override alembic.ini's static URL with the actual environment variable,
+# so `alembic upgrade head` targets whichever DATABASE_URL is currently set
+# (local Docker or cloud Supabase), instead of always using alembic.ini's
+# hardcoded value.
+db_url = os.getenv("DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
+
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

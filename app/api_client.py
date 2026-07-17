@@ -1,8 +1,9 @@
 import requests
 import streamlit as st
+import os
 
-API_BASE_URL = "http://localhost:8000"
-
+# Reads from Streamlit secrets in production, falls back to localhost for local dev
+API_BASE_URL = st.secrets.get("API_BASE_URL", os.getenv("API_BASE_URL", "http://localhost:8000"))
 
 @st.cache_data(ttl=300)
 def get_districts():
