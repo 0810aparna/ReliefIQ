@@ -15,12 +15,19 @@ except Exception:
     st.error("Could not reach the ReliefIQ API. Is the backend running? (`docker-compose up -d`)")
     st.stop()
 
+predictions = []
+skipped = []
+
 with st.spinner("Loading district risk overview..."):
-    predictions = [predict_district(d["district_id"]) for d in districts]
+    for d in districts:
+        try:
+            predictions.append(predict_district(d["district_id"]))
+        except Exception:
+            skipped.append(d["district_name"])
 
 df = pd.DataFrame(predictions)
 total_population = sum(d["population"] for d in districts)
-high_risk_count = len(df[df["severity"].isin(["High", "Critical"])])
+high_risk_count = len(df[df["severity"].isin(["High", "Critical"])]) if not df.empty else 0
 
 col1, col2, col3 = st.columns(3)
 col1.metric("Districts Monitored", len(districts))
@@ -31,15 +38,22 @@ st.divider()
 
 st.subheader("Current District Risk Overview")
 
-severity_colors = {"Low": "🟢", "Medium": "🟡", "High": "🟠", "Critical": "🔴"}
-df["Alert"] = df["severity"].map(severity_colors) + " " + df["severity"]
+if not df.empty:
+    severity_colors = {"Low": "🟢", "Medium": "🟡", "High": "🟠", "Critical": "🔴"}
+    df["Alert"] = df["severity"].map(severity_colors) + " " + df["severity"]
 
-st.dataframe(
-    df[["district_name", "Alert", "risk_score", "confidence"]].rename(
-        columns={"district_name": "District", "risk_score": "Risk Score", "confidence": "Confidence"}
-    ),
-    use_container_width=True,
-    hide_index=True,
-)
+    st.dataframe(
+        df[["district_name", "Alert", "risk_score", "confidence"]].rename(
+            columns={"district_name": "District", "risk_score": "Risk Score", "confidence": "Confidence"}
+        ),
+        use_container_width=True,
+        hide_index=True,
+    )
+else:
+    st.info("No prediction data available yet.")
+
+if skipped:
+    st.caption(f"Note: {len(skipped)} district(s) — {', '.join(skipped)} — have no 2018 disaster "
+               f"history record and are excluded from this overview (see data/DATA_SOURCES.md).")
 
 st.caption("Use the sidebar to explore individual district risk factors or view the allocation plan.")
