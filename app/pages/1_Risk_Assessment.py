@@ -5,6 +5,10 @@ sys.path.append(".")
 from app.api_client import get_districts, predict_district
 
 st.set_page_config(page_title="Risk Assessment", page_icon="🔍", layout="wide")
+
+from app.styles import apply_custom_style
+apply_custom_style()
+
 st.title("🔍 Risk Assessment")
 
 districts = get_districts()
@@ -52,3 +56,22 @@ if st.button("Run Prediction", type="primary"):
     if result["decision_action"] == "RUN_OPTIMIZER":
         st.warning(f"This district is flagged for resource allocation ({result['alert_level']} alert level). "
                    f"See the Allocation Planner page.")
+        
+st.divider()
+st.subheader("🌦️ Live Current Conditions")
+st.caption("Fetched live from NASA POWER — for context only, not used in the "
+           "risk score above (which is calibrated on 2018 historical data).")
+
+from app.live_weather import get_live_weather
+
+selected_district_data = next(d for d in districts if d["district_id"] == selected_id)
+try:
+    with st.spinner("Fetching live weather..."):
+        live = get_live_weather(selected_district_data["latitude"], selected_district_data["longitude"])
+    lc1, lc2, lc3 = st.columns(3)
+    lc1.metric("Rainfall (last available day)", f"{live['rainfall_mm']:.1f} mm")
+    lc2.metric("Temperature", f"{live['temperature_c']:.1f} °C")
+    lc3.metric("Humidity", f"{live['humidity_pct']:.0f}%")
+    st.caption(f"Data as of {live['date']}, source: NASA POWER API")
+except Exception as e:
+    st.caption(f"Live weather temporarily unavailable: {e}")

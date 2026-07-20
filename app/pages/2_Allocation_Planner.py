@@ -6,6 +6,10 @@ sys.path.append(".")
 from app.api_client import get_districts, run_optimization
 
 st.set_page_config(page_title="Allocation Planner", page_icon="📦", layout="wide")
+
+from app.styles import apply_custom_style
+apply_custom_style()
+
 st.title("📦 Allocation Planner")
 
 st.caption("Runs the full pipeline (predict -> decide -> forecast -> optimize) across all "

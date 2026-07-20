@@ -22,3 +22,4 @@ httpx
 streamlit
 requests
 plotly
+streamlit-autorefresh

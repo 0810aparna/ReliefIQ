@@ -3,8 +3,17 @@ import pandas as pd
 import sys
 sys.path.append(".")
 from app.api_client import get_districts, predict_district
+from streamlit_autorefresh import st_autorefresh
+from datetime import datetime
+
+# Auto-refresh every 5 minutes
+st_autorefresh(interval=5 * 60 * 1000, key="home_autorefresh")
+st.caption(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 st.set_page_config(page_title="ReliefIQ", page_icon="🌊", layout="wide")
+
+from app.styles import apply_custom_style
+apply_custom_style()
 
 st.title("🌊 ReliefIQ")
 st.caption("AI-powered flood relief decision support — Kerala, real 2018 flood data")
