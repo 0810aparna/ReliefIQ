@@ -3,17 +3,17 @@ import plotly.graph_objects as go
 import sys
 sys.path.append(".")
 from app.api_client import get_districts, predict_district
+from app.styles import apply_custom_style, render_theme_toggle, plotly_template
+from app.live_weather import get_live_weather
 
 st.set_page_config(page_title="Risk Assessment", page_icon="🔍", layout="wide")
-
-from app.styles import apply_custom_style
+render_theme_toggle()
 apply_custom_style()
 
 st.title("🔍 Risk Assessment")
 
 districts = get_districts()
 district_names = {d["district_name"]: d["district_id"] for d in districts}
-
 selected_name = st.selectbox("Select a district", sorted(district_names.keys()))
 selected_id = district_names[selected_name]
 
@@ -35,43 +35,33 @@ if st.button("Run Prediction", type="primary"):
 
     st.divider()
     st.subheader("What's driving this score?")
-    st.caption("ReliefIQ's v1 predictor is a transparent, weighted composite score — every "
-               "contribution below is fully traceable, not a black-box output. See ADR-008.")
+    st.caption("ReliefIQ's v1 predictor is a transparent, weighted composite score. See ADR-008.")
 
     components = result["components"]
     fig = go.Figure(go.Bar(
         x=list(components.values()),
         y=["Rainfall vs. Normal", "Landslide Count", "Rainfall Deviation"],
-        orientation="h",
-        marker_color=["#1B4965", "#5FA8D3", "#BEE9E8"],
+        orientation="h", marker_color=["#1B4965", "#5FA8D3", "#BEE9E8"],
     ))
-    fig.update_layout(
-        xaxis_title="Contribution to Risk Score",
-        yaxis_title="",
-        height=300,
-        margin=dict(l=10, r=10, t=10, b=10),
-    )
+    fig.update_layout(xaxis_title="Contribution to Risk Score", template=plotly_template(),
+                       height=300, margin=dict(l=10, r=10, t=10, b=10))
     st.plotly_chart(fig, use_container_width=True)
 
     if result["decision_action"] == "RUN_OPTIMIZER":
-        st.warning(f"This district is flagged for resource allocation ({result['alert_level']} alert level). "
-                   f"See the Allocation Planner page.")
-        
-st.divider()
-st.subheader("🌦️ Live Current Conditions")
-st.caption("Fetched live from NASA POWER — for context only, not used in the "
-           "risk score above (which is calibrated on 2018 historical data).")
+        st.warning(f"Flagged for resource allocation ({result['alert_level']} alert level).")
 
-from app.live_weather import get_live_weather
+    st.divider()
+    st.subheader("🌦️ Live Current Conditions")
+    st.caption("Fetched live from NASA POWER — context only, not used in the risk score above.")
 
-selected_district_data = next(d for d in districts if d["district_id"] == selected_id)
-try:
-    with st.spinner("Fetching live weather..."):
-        live = get_live_weather(selected_district_data["latitude"], selected_district_data["longitude"])
-    lc1, lc2, lc3 = st.columns(3)
-    lc1.metric("Rainfall (last available day)", f"{live['rainfall_mm']:.1f} mm")
-    lc2.metric("Temperature", f"{live['temperature_c']:.1f} °C")
-    lc3.metric("Humidity", f"{live['humidity_pct']:.0f}%")
-    st.caption(f"Data as of {live['date']}, source: NASA POWER API")
-except Exception as e:
-    st.caption(f"Live weather temporarily unavailable: {e}")
+    selected_district_data = next(d for d in districts if d["district_id"] == selected_id)
+    try:
+        with st.spinner("Fetching live weather..."):
+            live = get_live_weather(selected_district_data["latitude"], selected_district_data["longitude"])
+        lc1, lc2, lc3 = st.columns(3)
+        lc1.metric("Rainfall (last available day)", f"{live['rainfall_mm']:.1f} mm")
+        lc2.metric("Temperature", f"{live['temperature_c']:.1f} °C")
+        lc3.metric("Humidity", f"{live['humidity_pct']:.0f}%")
+        st.caption(f"Data as of {live['date']}, source: NASA POWER API")
+    except Exception as e:
+        st.caption(f"Live weather temporarily unavailable: {e}")
